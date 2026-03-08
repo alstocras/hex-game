@@ -7,6 +7,7 @@ import random
 BASE_DIR = os.path.dirname(__file__)
 
 pygame.init()
+pygame.mixer.init()
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("2π/3")
@@ -28,11 +29,25 @@ PALETTE = [
     (200, 200, 200),
 ]
 
-fontFace = "assets/font.ttf"
+fontFace = "assets/fonts/font.ttf"
 font_large = pygame.freetype.Font(fontFace, 64)
 font_med = pygame.freetype.Font(fontFace, 36)
 font_small = pygame.freetype.Font(fontFace, 28)
-font_title = pygame.freetype.Font("assets/cmunrm.ttf", 64)
+font_title = pygame.freetype.Font("assets/fonts/cmunrm.ttf", 64)
+
+MUSIC_MENU = "assets/audio/music/menu.ogg"
+MUSIC_GAME = "assets/audio/music/game.ogg"
+MUSIC_WINNER = "assets/audio/music/winner.ogg"
+
+current_music = None
+
+def play_music(path):
+    global current_music
+    if current_music == path:
+        return
+    pygame.mixer.music.load(path)
+    pygame.mixer.music.play(-1)
+    current_music = path
 
 def roll_dice():
     a = random.randint(1, 6)
@@ -289,6 +304,13 @@ while running:
     screen.fill(BLACK)
     hex_size = HEX_SIZE * zoom
 
+    if state in ("choose_players", "choose_colors"):
+        play_music(MUSIC_MENU)
+    elif state == "game":
+        play_music(MUSIC_GAME)
+    elif state == "winner":
+        play_music(MUSIC_WINNER)
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -316,7 +338,7 @@ while running:
                 offset_y = pan_start_offset[1] + dy
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
-                end_btn = pygame.Rect(WIDTH // 2 - 60, 10, 170, 30)
+                end_btn = pygame.Rect(WIDTH // 2 - 85, 10, 170, 30)
                 if end_btn.collidepoint(mx, my):
                     winner = get_winner_by_score(painted, player_colors, active_players)
                     winner_time = pygame.time.get_ticks()
