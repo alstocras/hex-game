@@ -28,7 +28,7 @@ PALETTE = [
     (200, 200, 200),
 ]
 
-fontFace = "/Users/jagdeepshokeen/projects/font.ttf"
+fontFace = "assets/font.ttf"
 font_large = pygame.freetype.Font(fontFace, 64)
 font_med = pygame.freetype.Font(fontFace, 36)
 font_small = pygame.freetype.Font(fontFace, 28)
