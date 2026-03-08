@@ -57,6 +57,10 @@ def check_eliminations(painted, player_colors, active_players):
             still_active.append(i)
     return still_active
 
+def get_winner_by_score(painted, player_colors, active_players):
+    best = max(active_players, key=lambda i: sum(1 for v in painted.values() if v == player_colors[i]))
+    return best
+
 def ai_move(painted, ai_color, human_color):
     ai_hexes = [k for k, v in painted.items() if v == ai_color]
     human_hexes = set(k for k, v in painted.items() if v == human_color)
@@ -236,6 +240,18 @@ def draw_dice(surface, dice, hexes_left):
     rem_y = panel_y + 10 + dice_row_h + 6
     surface.blit(remaining, (panel_x + (panel_w - remaining.get_width()) // 2, rem_y))
 
+def draw_end_game_button(surface):
+    btn_w = 170
+    btn_h = 30
+    btn_x = surface.get_width() // 2 - btn_w // 2
+    btn_y = 10
+    rect = pygame.Rect(btn_x, btn_y, btn_w, btn_h)
+    pygame.draw.rect(surface, (60, 20, 20), rect, border_radius=6)
+    pygame.draw.rect(surface, (120, 40, 40), rect, 2, border_radius=6)
+    label = render_text(font_small, "end game", WHITE)
+    surface.blit(label, (btn_x + (btn_w - label.get_width()) // 2, btn_y + (btn_h - label.get_height()) // 2))
+    return rect
+
 def end_turn(current_player, active_players):
     idx = active_players.index(current_player)
     next_idx = (idx + 1) % len(active_players)
@@ -299,40 +315,46 @@ while running:
                 offset_y = pan_start_offset[1] + dy
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
-                select_color = player_colors[current_player]
-                hex_coord = pixel_to_axial(mx - offset_x, my - offset_y, hex_size)
-                already_painted = [k for k, v in painted.items() if v == select_color]
-                placed = False
-                if hexes_left > 0 and hex_coord not in painted:
-                    if len(already_painted) == 0:
-                        painted[hex_coord] = select_color
-                        placed = True
-                    elif any(n in already_painted for n in hex_neighbors(*hex_coord)):
-                        painted[hex_coord] = select_color
-                        placed = True
-                if placed:
-                    hexes_left -= 1
-                    active_players = check_eliminations(painted, player_colors, active_players)
-                    if len(active_players) == 1:
-                        winner = active_players[0]
-                        winner_time = pygame.time.get_ticks()
-                        state = "winner"
-                    elif hexes_left == 0:
-                        current_player, current_dice, hexes_left = end_turn(current_player, active_players)
-                        if ai_enabled and current_player == 1:
-                            ai_color = player_colors[1]
-                            human_color = player_colors[0]
-                            for _ in range(hexes_left):
-                                move = ai_move(painted, ai_color, human_color)
-                                if move:
-                                    painted[move] = ai_color
-                            active_players = check_eliminations(painted, player_colors, active_players)
-                            if len(active_players) == 1:
-                                winner = active_players[0]
-                                winner_time = pygame.time.get_ticks()
-                                state = "winner"
-                            else:
-                                current_player, current_dice, hexes_left = end_turn(current_player, active_players)
+                end_btn = pygame.Rect(WIDTH // 2 - 60, 10, 170, 30)
+                if end_btn.collidepoint(mx, my):
+                    winner = get_winner_by_score(painted, player_colors, active_players)
+                    winner_time = pygame.time.get_ticks()
+                    state = "winner"
+                else:
+                    select_color = player_colors[current_player]
+                    hex_coord = pixel_to_axial(mx - offset_x, my - offset_y, hex_size)
+                    already_painted = [k for k, v in painted.items() if v == select_color]
+                    placed = False
+                    if hexes_left > 0 and hex_coord not in painted:
+                        if len(already_painted) == 0:
+                            painted[hex_coord] = select_color
+                            placed = True
+                        elif any(n in already_painted for n in hex_neighbors(*hex_coord)):
+                            painted[hex_coord] = select_color
+                            placed = True
+                    if placed:
+                        hexes_left -= 1
+                        active_players = check_eliminations(painted, player_colors, active_players)
+                        if len(active_players) == 1:
+                            winner = active_players[0]
+                            winner_time = pygame.time.get_ticks()
+                            state = "winner"
+                        elif hexes_left == 0:
+                            current_player, current_dice, hexes_left = end_turn(current_player, active_players)
+                            if ai_enabled and current_player == 1:
+                                ai_color = player_colors[1]
+                                human_color = player_colors[0]
+                                for _ in range(hexes_left):
+                                    move = ai_move(painted, ai_color, human_color)
+                                    if move:
+                                        painted[move] = ai_color
+                                active_players = check_eliminations(painted, player_colors, active_players)
+                                if len(active_players) == 1:
+                                    winner = active_players[0]
+                                    winner_time = pygame.time.get_ticks()
+                                    state = "winner"
+                                else:
+                                    current_player, current_dice, hexes_left = end_turn(current_player, active_players)
 
         elif state == "choose_players":
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -421,6 +443,7 @@ while running:
         draw_palette(screen, PALETTE, player_colors, current_player)
         draw_score(screen, player_colors, painted, ai_enabled, current_player, active_players)
         draw_dice(screen, current_dice, hexes_left)
+        draw_end_game_button(screen)
         select_color = player_colors[current_player]
         label = render_text(font_small, f"Player {current_player}'s turn", WHITE)
         swatch_x = WIDTH - label.get_width() - 50
