@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(__file__)
 pygame.init()
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
-pygame.display.set_caption("Hex Grid")
+pygame.display.set_caption("2π/3")
 
 HEX_SIZE = 40
 WHITE = (255, 255, 255)
@@ -32,6 +32,7 @@ fontFace = "assets/font.ttf"
 font_large = pygame.freetype.Font(fontFace, 64)
 font_med = pygame.freetype.Font(fontFace, 36)
 font_small = pygame.freetype.Font(fontFace, 28)
+font_title = pygame.freetype.Font("assets/cmunrm.ttf", 64)
 
 def roll_dice():
     a = random.randint(1, 6)
@@ -411,7 +412,7 @@ while running:
                     state = "choose_players"
 
     if state == "choose_players":
-        title = render_text(font_large, "Hex Grid", WHITE)
+        title = render_text(font_title, "2π/3", WHITE)
         screen.blit(title, (WIDTH//2 - title.get_width()//2, HEIGHT//2 - 120))
         sub = render_text(font_med, "How many players?", GRAY)
         screen.blit(sub, (WIDTH//2 - sub.get_width()//2, HEIGHT//2 - 40))
